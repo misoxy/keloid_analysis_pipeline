@@ -43,13 +43,14 @@ def cluster_one_lambda(a_full, banksy_dict, lam, max_m, leiden_resolution):
 
     Returns the cluster labels (one per cell) and the 2D UMAP coords.
     """
-    # banksy_dict is keyed by nbr_weight_decay then by lambda
+    # banksy_dict is keyed by nbr_weight_decay then by lambda. The inner value
+    # is itself an AnnData whose X is the neighbour-augmented BANKSY matrix.
     decay_key = list(banksy_dict.keys())[0]
-    banksy_matrix = banksy_dict[decay_key][lam]["banksy_matrix"]
+    banksy_adata = banksy_dict[decay_key][lam]["adata"]
 
     # Build a fresh AnnData so we don't pollute the input.
     # rows = cells (must match a_full), columns = BANKSY features.
-    a = ad.AnnData(X=np.asarray(banksy_matrix), obs=a_full.obs.copy())
+    a = ad.AnnData(X=np.asarray(banksy_adata.X), obs=a_full.obs.copy())
     a.obsm["spatial"] = a_full.obsm["spatial"].copy()
 
     # Standard scanpy: PCA -> neighbours -> Leiden -> UMAP.
