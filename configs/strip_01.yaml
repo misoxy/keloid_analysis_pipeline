@@ -11,10 +11,10 @@ description: >
 # I pick these by looking at the chip plot from
 # notebooks/exploration/01_strip_picker.ipynb and reading them off the axes.
 strip_coords:
-  x_min: 4300
-  x_max: 11099
-  y_min: 7900
-  y_max: 10599
+  x_min: 4000
+  x_max: 11000
+  y_min: 8500
+  y_max: 10500
 
 # Input data
 input:
