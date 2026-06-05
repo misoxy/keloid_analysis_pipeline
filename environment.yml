@@ -1,0 +1,31 @@
+# Conda environment for the keloid spatial pipeline.
+# Build once:   conda env create -f environment.yml
+# Activate:     conda activate keloid_pipeline
+
+name: keloid_pipeline
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - scikit-image
+  - matplotlib
+  - seaborn
+  - h5py
+  - tifffile
+  - pyarrow
+  - jupyterlab
+  - pyyaml
+  - pip
+  - pip:
+      - scanpy>=1.10
+      - anndata>=0.10
+      - leidenalg
+      - igraph
+      - cellpose>=3.0
+      - banksy_py
+      - squidpy

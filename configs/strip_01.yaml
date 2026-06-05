@@ -1,0 +1,43 @@
+# Config for one tissue strip ROI.
+# To analyse a new strip: copy this file, change `roi_id` and `strip_coords`,
+# then run: python pipeline/run_all.py --config configs/strip_02.yaml
+
+roi_id: strip_01
+description: >
+  First strip. Span the tissue from the epidermal edge into the deep dermis
+  so that all skin compartments are represented when clustering.
+
+# Strip coordinates in chip pixel space (x_min, x_max, y_min, y_max).
+# I pick these by looking at the chip plot from
+# notebooks/exploration/01_strip_picker.ipynb and reading them off the axes.
+strip_coords:
+  x_min: 4300
+  x_max: 11099
+  y_min: 7900
+  y_max: 10599
+
+# Input data
+input:
+  proseg_h5ad: /Users/chobani/keloid_analysis/outputs/proseg_full_raw.h5ad
+
+# Output folder for this strip
+output_dir: outputs/strip_01
+
+# QC + normalisation
+qc:
+  cap_umi_percentile: 99      # drop top 1% UMI cells (doublet-like)
+  min_counts_per_cell: 50
+  min_cells_per_gene: 5
+  n_top_hvg: 3000
+  # Genes to drop from HVG (dominate keloid expression and bias clustering)
+  structural_regex: '^(COL\d|KRT\d|MT-|RP[SL]\d|HB[^P])'
+
+# BANKSY parameters
+banksy:
+  lambdas: [0.0, 0.2, 0.4, 0.8]   # sweep: low = cell typing, high = tissue domain
+  k_geom: 6                       # spatial neighbours per cell
+  leiden_resolution: 0.3
+
+# Annotation
+annotation:
+  marker_panel: configs/skin_markers.yaml

@@ -1,0 +1,85 @@
+# Marker genes per skin cell type.
+# Used by pipeline/04_annotate.py to assign cell type labels to clusters
+# based on which markers are most strongly expressed in each cluster.
+#
+# Tweak this panel as we learn more about the tissue. Add new cell types
+# under a new top-level key. Genes should be HGNC symbols matching the
+# var_names in the proseg AnnData.
+
+basal_keratinocyte:
+  - KRT14
+  - KRT5
+  - KRT15
+  - COL17A1
+  - TP63
+
+suprabasal_keratinocyte:
+  - KRT10
+  - KRT1
+  - IVL
+  - LOR
+  - FLG
+
+fibroblast:
+  - COL1A1
+  - COL3A1
+  - DCN
+  - LUM
+  - PDGFRA
+  - VIM
+
+myofibroblast:
+  - ACTA2
+  - TAGLN
+  - MYL9
+
+endothelial:
+  - PECAM1
+  - CDH5
+  - VWF
+  - AQP1
+
+smooth_muscle:
+  - ACTA2
+  - MYH11
+  - CNN1
+
+T_cell:
+  - CD3D
+  - CD3E
+  - CD8A
+  - CD4
+  - IL7R
+
+B_cell:
+  - MS4A1
+  - CD79A
+  - CD19
+
+macrophage:
+  - CD68
+  - LYZ
+  - CD163
+  - AIF1
+
+dendritic_cell:
+  - CD1A
+  - CD1C
+  - CLEC9A
+  - HLA-DRA
+
+mast_cell:
+  - TPSAB1
+  - TPSB2
+  - KIT
+  - CPA3
+
+melanocyte:
+  - MLANA
+  - TYR
+  - DCT
+
+adipocyte:
+  - PLIN1
+  - ADIPOQ
+  - LEP

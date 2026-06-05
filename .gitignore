@@ -216,3 +216,29 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# === keloid pipeline additions ===
+# Never commit data. Outputs live on the laptop / lab server, not in git.
+outputs/
+*.h5ad
+*.h5
+*.gef
+*.tif
+*.tiff
+*.npy
+*.npy.gz
+*.mtx
+*.mtx.gz
+*.geojson.gz
+*.zarr/
+
+# macOS clutter
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local editor / env
+.vscode/
+.idea/
+*.swp
