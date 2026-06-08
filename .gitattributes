@@ -1,0 +1,10 @@
+# Tell GitHub's linguist tool how to count files for the language bar.
+# Notebooks have huge embedded outputs (figures as base64) that dominate by
+# byte count even though the real code is in pipeline/*.py.
+
+# Treat notebooks as documentation, not as a programming language.
+# They still appear in the repo, they just don't show up in the language %.
+*.ipynb linguist-documentation
+
+# HTML reports are generated artefacts, not source.
+*.html linguist-generated
