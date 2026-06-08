@@ -31,7 +31,7 @@ import anndata as ad
 import scanpy as sc
 
 import sys; sys.path.insert(0, str(Path(__file__).parent))
-from io_utils import load_config, out_paths
+from io_utils import load_config, out_paths, patch_log1p_base
 from stats_utils import gene_vector
 from plot_utils import spatial_scatter
 
@@ -59,6 +59,7 @@ def main():
 
     print(f"[stage 5] roi_id: {cfg['roi_id']}")
     a = ad.read_h5ad(paths["annotated"])
+    patch_log1p_base(a)   # scanpy 1.9 h5ad round-trip workaround
     print(f"[stage 5] loaded: {a.shape}")
 
     # ---- 1. Sub-cluster deep_dermal_stromal ------------------------------

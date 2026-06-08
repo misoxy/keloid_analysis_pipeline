@@ -28,7 +28,7 @@ import anndata as ad
 import scanpy as sc
 
 import sys; sys.path.insert(0, str(Path(__file__).parent))
-from io_utils import load_config, load_marker_panels, out_paths
+from io_utils import load_config, load_marker_panels, out_paths, patch_log1p_base
 from stats_utils import score_marker_sets, marker_fraction_table
 from plot_utils import spatial_scatter
 
@@ -50,6 +50,7 @@ def main():
     print(f"[stage 4] z threshold : {z_thresh}")
 
     a = ad.read_h5ad(paths["banksy"])
+    patch_log1p_base(a)   # scanpy 1.9 h5ad round-trip workaround
     print(f"[stage 4] loaded      : {a.shape}")
 
     # ---- 4a. Broad annotation ---------------------------------------------

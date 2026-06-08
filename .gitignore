@@ -236,3 +236,4 @@ outputs/
 .vscode/
 .idea/
 *.swp
+configs/*_local.yaml

@@ -25,6 +25,16 @@ def load_marker_panels(path):
         return yaml.safe_load(f)
 
 
+def patch_log1p_base(adata):
+    """Workaround for scanpy 1.9 + anndata h5ad round-trip that drops the
+    'base' key from uns['log1p']. Several scanpy tools (rank_genes_groups,
+    score_genes) raise KeyError without it. Call right after read_h5ad.
+    """
+    if "log1p" in adata.uns and "base" not in adata.uns["log1p"]:
+        adata.uns["log1p"]["base"] = None
+    return adata
+
+
 def out_paths(cfg):
     """Standard set of output paths for one ROI. All stages use these names."""
     out = Path(cfg["output_dir"])

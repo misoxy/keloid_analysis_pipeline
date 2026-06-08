@@ -25,7 +25,7 @@ import pandas as pd
 import anndata as ad
 
 import sys; sys.path.insert(0, str(Path(__file__).parent))
-from io_utils import load_config, out_paths
+from io_utils import load_config, out_paths, patch_log1p_base
 from stats_utils import neighbourhood_enrichment, matrix_to_long
 from plot_utils import neighbour_heatmap
 
@@ -48,6 +48,7 @@ def main():
     print(f"[stage 6] bin size : {n_cfg['spatial_bin_size_px']} px (spatial-bin null)")
 
     a = ad.read_h5ad(paths["with_igg"])
+    patch_log1p_base(a)   # defensive: scanpy 1.9 h5ad round-trip workaround
     print(f"[stage 6] loaded   : {a.shape}")
 
     label_key = "celltype_detailed_v1"

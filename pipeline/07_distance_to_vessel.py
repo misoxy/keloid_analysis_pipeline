@@ -24,7 +24,7 @@ import anndata as ad
 from sklearn.neighbors import NearestNeighbors
 
 import sys; sys.path.insert(0, str(Path(__file__).parent))
-from io_utils import load_config, out_paths
+from io_utils import load_config, out_paths, patch_log1p_base
 from stats_utils import distance_label_test
 from plot_utils import distance_boxplot
 
@@ -45,6 +45,7 @@ def main():
     print(f"[stage 7] perms         : {d_cfg['n_perm']} (spatial-bin null, bin={nb_bin}px)")
 
     a = ad.read_h5ad(paths["with_igg"])
+    patch_log1p_base(a)   # defensive: scanpy 1.9 h5ad round-trip workaround
     xy = np.asarray(a.obsm["spatial"])
     label_key = "celltype_detailed_v1"
 
