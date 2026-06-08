@@ -20,32 +20,76 @@ broad_markers:
   t_cell:                    [CD3D, CD3E, TRAC, TRBC1, TRBC2, IL7R, CD2]
   b_cell:                    [MS4A1, CD79A, CD79B, CD74, BANK1, CD19, CD37]
 
-# ===== fibroblast_subtype_markers: five subtype programs =====
+# ===== fibroblast_subtype_markers: six subtype programs =====
 # References: Driskell 2013 Nature (papillary vs reticular lineage),
 # Tabib 2018 J Invest Dermatol (skin scRNA-seq atlas),
 # Buechler 2021 Nature (pan-tissue inflammatory fibroblast atlas),
 # Liu 2022 Cell Discov (keloid mesenchymal fibroblast).
 fibroblast_subtype_markers:
+  quiescent_fibroblast:           [PI16, CD55, DPP4, MFAP5, IGFBP6, IGF1]
   mesenchymal_fibroblast:         [POSTN, ASPN, CTHRC1, COL11A1, COL12A1, FN1, SPARC, COMP, COL5A1, ITGA11]
   secretory_papillary_fibroblast: [APOD, CFD, CXCL14, PI16, C7, DPP4, FBLN1, MFAP5]
   secretory_reticular_fibroblast: [DPT, COL14A1, CCDC80, FBLN1, MFAP5, LUM, DCN, COL6A5]
   pro_inflammatory_fibroblast:    [CXCL1, CXCL2, CXCL3, CXCL8, IL6, CCL2, ICAM1, TNFAIP6, PTGS2]
   myofibroblast:                  [ACTA2, TAGLN, MYL9, TPM2, CNN1, ACTG2, POSTN]
 
-# ===== vessel_markers: three vessel-compartment classes =====
+# ===== vessel_markers: five vessel-compartment classes =====
+# Arterial vs venous endothelial split helps when asking which immune cells
+# transmigrate where. Arterial markers from Vanlandewijck 2018 Nature.
 vessel_markers:
   endothelial:              [PECAM1, CDH5, VWF, KDR, CLDN5, ESAM, EMCN, ACKR1]
-  lymphatic_endothelial:    [LYVE1, PROX1, PDPN, FLT4, CCL21]
+  arterial_endothelial:     [GJA5, DLL4, HEY1, EFNB2, SOX17, GJA4]
+  venous_endothelial:       [ACKR1, SELP, NR2F2, EPHB4, NRP2]
+  lymphatic_endothelial:    [LYVE1, PROX1, PDPN, FLT4, CCL21, MMRN1]
   pericyte_smooth_muscle:   [RGS5, PDGFRB, CSPG4, MCAM, NOTCH3, ACTA2, TAGLN, MYH11]
 
-# ===== immune_markers: four candidate immune populations =====
-# IgG_producing is scored here too so the same scoring framework applies to it.
+# ===== immune_markers: pan-immune calls =====
+# Broad calls. Subtypes (M1/M2 macrophages, CD4/CD8 T cells, Treg etc.) are in
+# the immune_subtype_markers panel below, scored after the broad call so it does
+# not get drowned by the dominant pan markers.
 immune_markers:
   macrophage:    [LYZ, CD68, CD163, C1QA, C1QB, C1QC, MS4A7, FCGR3A, TYROBP, LST1]
   mast_cell:     [TPSAB1, TPSB2, CPA3, KIT, HDC, MS4A2]
   t_cell:        [CD3D, CD3E, TRAC, TRBC1, TRBC2, IL7R, CD2]
   b_cell:        [MS4A1, CD79A, CD79B, CD74, BANK1, CD19, CD37]
   IgG_producing: [IGHG1, IGHG2, IGHG3, IGHG4, IGKC, IGLC1, IGLC2, IGLC3]
+  nk_cell:       [NCAM1, NKG7, GNLY, KLRD1, FCGR3A, PRF1]
+  dendritic_cell: [CD1C, CLEC10A, FCER1A, ITGAX, IRF8, IRF4]
+
+# ===== immune_subtype_markers: finer immune resolution =====
+# Stereo-seq dropout for these tends to be substantial; treat as proposals.
+# Macrophage polarisation: M2-like (anti-inflammatory, pro-fibrotic in keloid;
+# Bagabir 2012 Br J Dermatol) vs M1-like (pro-inflammatory).
+# T cell subtypes: Tabib 2018 J Invest Dermatol, plus Treg / Th2 / Th17
+# markers known to be relevant to keloid (Jin 2014 Wound Repair Regen).
+immune_subtype_markers:
+  macrophage_m2_like:      [CD163, MRC1, MERTK, MAF, STAB1, MS4A6A]
+  macrophage_m1_like:      [CD86, IL1B, TNF, NOS2, CXCL10, FCGR1A]
+  t_cell_cd4:              [CD4, IL7R, LTB]
+  t_cell_cd8:              [CD8A, CD8B, GZMA, GZMK, GZMB]
+  t_regulatory:            [FOXP3, IL2RA, TIGIT, CTLA4, IKZF2]
+  t_helper_2:              [GATA3, IL4, IL5, IL13]
+  t_helper_17:             [RORC, IL17A, IL22, CCR6]
+
+# ===== plasma_cell_maturation: ASC differentiation axis =====
+# Helps tell if IgG-rich cells are early plasmablasts (proliferating, MKI67+)
+# vs late long-lived plasma cells (high SDC1, low MKI67). Both have weak signal
+# in skin Stereo-seq but report what is detectable.
+plasma_cell_maturation:
+  plasmablast:              [MKI67, AICDA, PRDM1, IRF4]
+  long_lived_plasma_cell:   [SDC1, MZB1, XBP1, CD38, TNFRSF17]
+
+# ===== tls_markers: tertiary lymphoid structure components =====
+# TLS = ectopic lymphoid aggregates with B cell follicle, T cell zone, follicular
+# dendritic cells, sometimes germinal centre activity. In chronic inflammation
+# they generate local class-switched plasma cells, which is mechanistically the
+# right candidate for the deep-dermal IgG aggregate we observe in keloid.
+# References: Sautes-Fridman 2019 Nat Rev Cancer; Pipi 2018 Front Immunol.
+tls_markers:
+  follicular_dendritic:    [CR2, CXCL13, FDCSP, BCL6]
+  germinal_centre_b:       [BCL6, AICDA, MKI67, S100A4, RGS13]
+  follicular_helper_t:     [CXCR5, PDCD1, BCL6, ICOS, IL21]
+  high_endothelial_venule: [PECAM1, MADCAM1, SELE, CCL21, CXCL13]
 
 # ===== Markers used in the IF/IHC validation panel (for reference) =====
 # Not used by the pipeline; documented here for protein-level validation.

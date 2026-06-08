@@ -42,7 +42,8 @@ def main():
     paths = out_paths(cfg)
     panels = load_marker_panels(cfg["annotation"]["marker_panels"])
     z_thresh = cfg["annotation"]["min_marker_score_z"]
-    label_map = {str(k): v for k, v in cfg["annotation"]["broad_label_map"].items()}
+    raw_map = cfg["annotation"].get("broad_label_map") or {}
+    label_map = {str(k): v for k, v in raw_map.items()}
     banksy_key = f"banksy_l{cfg['canonical_lambda']}"
 
     print(f"[stage 4] roi_id      : {cfg['roi_id']}")
@@ -56,24 +57,58 @@ def main():
     # ---- 4a. Broad annotation ---------------------------------------------
     if banksy_key not in a.obs.columns:
         raise KeyError(f"{banksy_key} not in adata.obs. Re-run stage 3 with that lambda.")
-    a.obs["celltype"] = a.obs[banksy_key].astype(str).map(label_map)
-    n_unmapped = int(a.obs["celltype"].isna().sum())
-    if n_unmapped > 0:
-        raise ValueError(
-            f"{n_unmapped} cells have BANKSY clusters not in broad_label_map.\n"
-            f"Edit the broad_label_map in {args.config} so all clusters are covered.\n"
-            f"Cluster -> count summary:\n{a.obs[banksy_key].value_counts()}"
-        )
-    print(f"[4a] broad cell counts:\n{a.obs['celltype'].value_counts().to_string()}")
 
-    # Marker table per BANKSY cluster (for the lab member to sanity-check labels)
+    # Marker table per BANKSY cluster (used both for sanity-check and for
+    # auto-suggesting labels when broad_label_map is empty).
     sc.tl.rank_genes_groups(a, groupby=banksy_key, method="wilcoxon", use_raw=False)
     top_genes = pd.DataFrame({
-        c: list(a.uns["rank_genes_groups"]["names"][c][:15])
+        c: list(a.uns["rank_genes_groups"]["names"][c][:25])
         for c in a.uns["rank_genes_groups"]["names"].dtype.names
     })
     top_genes.to_csv(paths["tab"] / "04a_top_markers_per_cluster.csv", index=False)
     print(f"[4a] wrote top markers per cluster")
+
+    # If the YAML provided a label map, use it. Otherwise auto-suggest from
+    # marker overlap with the broad_markers panels and write suggestions for
+    # the user to review.
+    cluster_ids = list(a.obs[banksy_key].astype(str).unique())
+    missing = [c for c in cluster_ids if c not in label_map]
+    if missing:
+        print(f"[4a] {len(missing)} cluster(s) not in broad_label_map; auto-suggesting from markers")
+        broad_panels = panels.get("broad_markers", {})
+        suggestions = {}
+        rows = []
+        for cl in cluster_ids:
+            cl_top = set(top_genes[cl].head(25))
+            best_panel, best_overlap, best_n = None, 0, 0
+            for panel_name, panel_genes in broad_panels.items():
+                overlap = cl_top.intersection(panel_genes)
+                if len(overlap) > best_overlap:
+                    best_panel, best_overlap, best_n = panel_name, len(overlap), len(panel_genes)
+            suggestions[cl] = best_panel or "unassigned"
+            rows.append({
+                "cluster": cl,
+                "n_cells": int((a.obs[banksy_key].astype(str) == cl).sum()),
+                "suggested_label": suggestions[cl],
+                "marker_overlap": best_overlap,
+                "panel_size": best_n,
+                "top_markers": ",".join(top_genes[cl].head(10)),
+            })
+        sug_df = pd.DataFrame(rows).sort_values("n_cells", ascending=False)
+        sug_df.to_csv(paths["tab"] / "04a_broad_label_suggestions.csv", index=False)
+        print(f"[4a] auto-suggested labels:\n{sug_df.to_string(index=False)}")
+        print(f"[4a] To override, add a broad_label_map block to your YAML and re-run stage 4.")
+        for cl, lab in suggestions.items():
+            label_map.setdefault(cl, lab)
+
+    a.obs["celltype"] = a.obs[banksy_key].astype(str).map(label_map)
+    n_unmapped = int(a.obs["celltype"].isna().sum())
+    if n_unmapped > 0:
+        raise ValueError(
+            f"{n_unmapped} cells still unmapped after auto-suggestion. "
+            f"Cluster -> count summary:\n{a.obs[banksy_key].value_counts()}"
+        )
+    print(f"[4a] broad cell counts:\n{a.obs['celltype'].value_counts().to_string()}")
 
     spatial_scatter(
         a, "celltype",

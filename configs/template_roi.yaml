@@ -78,15 +78,19 @@ annotation:
   # Cells whose top panel score is below this stay as <type>_uncertain.
   min_marker_score_z: 1.0
 
-  # Manual cluster -> broad cell type map at the canonical lambda.
-  # EDIT this after reading the marker table printed by stage 4 if your
-  # Leiden numbering does not match the locked map.
-  broad_label_map:
-    "0": fibroblast
-    "1": deep_dermal_stromal
-    "2": keratinocyte_basal_mix
-    "3": keratinocyte_suprabasal
-    "4": vascular_mixed
+  # Optional: manual cluster -> broad cell type map at the canonical lambda.
+  # If you leave this empty (or remove the block), stage 4 auto-suggests labels
+  # by matching each cluster's top markers against the broad_markers panels in
+  # configs/marker_panels.yaml. The suggested labels are written to
+  # outputs/<roi_id>/tables/04a_broad_label_suggestions.csv for review. If you
+  # need to override a call, fill in this block and re-run stage 4 from cache.
+  broad_label_map: {}
+  # Example (locked map for the strip_01 reference run):
+  #   "0": fibroblast
+  #   "1": deep_dermal_stromal
+  #   "2": keratinocyte_basal_mix
+  #   "3": keratinocyte_suprabasal
+  #   "4": vascular_mixed
 
 # ===== IgG detection (stage 5) =====
 igg:

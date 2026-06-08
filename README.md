@@ -1,6 +1,8 @@
 # keloid_analysis_pipeline
 
-This repository contains a reproducible pipeline for analysing keloid Stereo-seq data at single-cell spatial resolution. It starts from proseg-segmented cells, crops user-defined tissue strips, runs QC and BANKSY clustering, annotates major cell types using marker panels, and tests which cell populations are physically close to each other.
+This repository contains a reproducible pipeline for analysing keloid Stereo-seq data at single-cell spatial resolution. It starts from proseg-segmented cells, crops user-defined tissue strips (or auto-tiles the whole chip), runs QC and BANKSY clustering, annotates major cell types using marker panels, tests which cell populations are physically close to each other, detects candidate tertiary lymphoid structures, and aggregates across multiple ROIs for cross-region reproducibility.
+
+The pipeline is a **skeleton**: numbers and labels in any individual report depend on the data and parameters you give it. Every result is meant to be reviewed and adjusted, not treated as ground truth. The locked example below (configs/strip_01.yaml) is one validated test case, not a target output.
 
 ## Starting guide
 
@@ -89,6 +91,33 @@ The HTML report sections correspond directly to pipeline stages. The numbers and
 | 7 | `07_distance_to_vessel.py` | igg h5ad | distance CSVs, distance boxplot PNG |
 | 8 | `08_local_niche.py` | igg h5ad | niche test CSVs, near-vs-far PNGs |
 | 9 | `09_report.py` | all of the above | `report.html` (self-contained, base64 images) |
+| 11 | `11_tls_detect.py` | igg h5ad + tls_markers panel | TLS candidate clusters CSV + spatial PNG |
+| aux | `aux_tile_chip.py` | proseg full chip h5ad | one YAML config per tile, covering the whole chip |
+| 10 | `10_aggregate_rois.py` | per-ROI outputs from a glob | cross-ROI z-score matrix, Spearman correlation heatmap, cell-type count summary |
+
+## Chip-wide thorough analysis
+
+Single ROI = single observation. For an honest read of the chip, tile it and aggregate:
+
+```bash
+# 1. Tile the chip. Produces configs/autotile_NN_local.yaml for each non-empty tile.
+python pipeline/aux_tile_chip.py --base-config configs/strip_01_local.yaml \
+    --tile-width 7000 --tile-height 2500 --tile-overlap 500 --min-cells-per-tile 2000
+
+# 2. Run the pipeline on each tile (loop in shell)
+for cfg in configs/autotile_*_local.yaml; do
+    python pipeline/run_all.py --config "$cfg"
+done
+
+# 3. Aggregate
+python pipeline/10_aggregate_rois.py --roi-glob 'outputs/autotile_*' --out outputs/aggregate
+```
+
+The aggregate report tells you whether the IgG-neighbour pattern (or any other pattern in stage 6) reproduces across tiles. A Spearman rank correlation above ~0.5 between two tiles is strong reproducibility; below ~0.2 means the finding is local to one tile.
+
+## Stage 4 auto-suggests labels by default
+
+If `annotation.broad_label_map` in your YAML is empty (or absent), stage 4 reads the Wilcoxon top markers per BANKSY cluster, matches each cluster against the `broad_markers` panels in `marker_panels.yaml`, and writes its best-guess label assignment to `outputs/<roi_id>/tables/04a_broad_label_suggestions.csv`. To override any call, fill in the `broad_label_map` block in the YAML and re-run from stage 4. This is what makes the pipeline usable on any tile or any chip without re-locking labels by hand.
 
 ## Re-running a single stage
 
@@ -111,14 +140,17 @@ All stages read intermediate `.h5ad` files from `outputs/<roi_id>/`, so you can 
 
 Each ROI is described by one YAML file in `configs/`. The template `configs/template_roi.yaml` documents every field with inline comments.
 
-Marker panels are in `configs/marker_panels.yaml`, organised into four panel families:
+Marker panels are in `configs/marker_panels.yaml`, organised into seven panel families:
 
-- `broad_markers`: basal keratinocyte, suprabasal keratinocyte, pan-fibroblast, myofibroblast, endothelial, lymphatic endothelial, pericyte/smooth muscle, macrophage, mast cell, T cell, B cell.
-- `fibroblast_subtype_markers`: mesenchymal / secretory papillary / secretory reticular / pro-inflammatory / myofibroblast.
-- `vessel_markers`: endothelial / lymphatic endothelial / pericyte-smooth muscle.
-- `immune_markers`: macrophage / mast cell / T cell / B cell / IgG_producing.
+- `broad_markers`: keratinocyte (basal, suprabasal), pan-fibroblast, myofibroblast, endothelial, lymphatic endothelial, pericyte/smooth muscle, macrophage, mast cell, T cell, B cell.
+- `fibroblast_subtype_markers`: quiescent / mesenchymal / secretory papillary / secretory reticular / pro-inflammatory / myofibroblast.
+- `vessel_markers`: pan-endothelial / arterial / venous / lymphatic / pericyte-smooth muscle.
+- `immune_markers`: macrophage / mast / T cell / B cell / IgG_producing / NK / dendritic.
+- `immune_subtype_markers`: M1 vs M2-like macrophage; CD4 vs CD8 vs Treg vs Th2 vs Th17 T cells.
+- `plasma_cell_maturation`: plasmablast (early, proliferating) vs long-lived plasma cell (terminal).
+- `tls_markers`: follicular dendritic / germinal centre B / follicular helper T / high endothelial venule. Used by stage 11 for tertiary lymphoid structure detection.
 
-To add a new cell type, add a key under the relevant panel family. Genes are HGNC symbols matching the AnnData `var_names`.
+To add a new cell type, add a key under the relevant panel family. Genes are HGNC symbols matching the AnnData `var_names`. Stage 4 prints a per-panel coverage table (which genes are present vs missing in your dataset) so you can see immediately whether a panel can be trusted for your data.
 
 ## Caveats
 

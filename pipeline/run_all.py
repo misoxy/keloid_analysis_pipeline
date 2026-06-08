@@ -49,6 +49,7 @@ STAGES = [
     (7, "07_distance_to_vessel.py", "distance to vessel"),
     (8, "08_local_niche.py",        "local stromal niche"),
     (9, "09_report.py",             "build HTML report"),
+    (11, "11_tls_detect.py",        "tertiary lymphoid structure detection"),
 ]
 
 
@@ -75,8 +76,8 @@ def main():
     parser.add_argument("--from-stage", type=float, default=1,
                         help="first stage to run. Default 1 (skip upstream Cellpose+proseg). "
                              "Use 0 to include Cellpose, 0.5 to include proseg.")
-    parser.add_argument("--to-stage", type=float, default=9,
-                        help="last stage to run (default 9)")
+    parser.add_argument("--to-stage", type=float, default=11,
+                        help="last stage to run (default 11; covers TLS detection after report)")
     args = parser.parse_args()
 
     config_path = Path(args.config).resolve()
