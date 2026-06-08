@@ -1,0 +1,140 @@
+# Template config for one tissue strip ROI.
+# Copy this file to configs/<your_roi>.yaml and edit:
+#   - roi_id, description
+#   - strip_coords (in chip pixel coordinates; read off the chip overview plot)
+#   - input.proseg_h5ad path
+#   - output_dir
+# Everything else can stay at defaults unless you have a specific reason.
+
+# ===== Required: identity + spatial scope =====
+roi_id: my_new_strip
+description: >
+  One-sentence description of why this strip was chosen, e.g.
+  "spans epidermis to deep dermis in the left half of the chip".
+
+# Pick by eye from a full-chip plot. Coordinates in chip pixel space.
+strip_coords:
+  x_min: 4000
+  x_max: 11000
+  y_min: 8500
+  y_max: 10500
+
+# ===== Required: inputs =====
+input:
+  # For downstream stages 1-9, this is the h5ad you start from.
+  # If you run the upstream stages (0, 0b), this should match
+  # `upstream.upstream_out_dir`/proseg_full_raw.h5ad after stage 0b finishes.
+  proseg_h5ad: /absolute/path/to/proseg_full_raw.h5ad
+
+# ===== Optional: upstream stages (server-intended) =====
+# Used only if you run pipeline/run_all.py --from-stage 0 (Cellpose) or
+# --from-stage 0.5 (proseg). Skip this whole block if you already have a
+# proseg h5ad to feed in.
+upstream:
+  chip_id: chip_C04029G4
+  upstream_out_dir: outputs/chip_C04029G4_upstream
+  he_tif: /absolute/path/to/HE_C04029G4_regist.tif
+  tissue_gef: /absolute/path/to/C04029G4.tissue.gef
+  cellpose_diameter: null      # null = auto-estimate; set explicitly for reproducibility
+  cellpose_flow_threshold: 0.4
+  cellpose_cellprob_threshold: 0.0
+  proseg_binary: /Users/chobani/.cargo/bin/proseg   # or just "proseg" if on PATH
+  proseg_burnin_samples: 100
+  proseg_samples: 100
+
+# Where the pipeline writes intermediate h5ads, figures, tables, the report
+output_dir: outputs/my_new_strip
+
+# ===== QC + normalisation (stage 2) =====
+qc:
+  cap_umi_percentile: 99      # drop the top 1% UMI cells (likely doublets)
+  min_counts_per_cell: 50
+  min_cells_per_gene: 5
+  n_top_hvg: 3000
+  # Gene families that dominate keloid expression and would hijack PCA.
+  # Drop these from the HVG set so spatial / immune signal can drive clustering.
+  structural_regex: '^(COL\d|KRT\d|MT-|RP[SL]\d|HB[^P])'
+
+# ===== BANKSY (stage 3) =====
+banksy:
+  # Lambda sweep. lambda controls how much spatial neighbour info is mixed in.
+  #   0.0 = pure transcriptome (no spatial)
+  #   0.2 = cell typing (cell types preserved, slight spatial tightening) -- default
+  #   0.4 = balanced
+  #   0.8 = tissue domains (regions, not types)
+  lambdas: [0.0, 0.2, 0.4, 0.8]
+  k_geom: 6                       # spatial neighbours per cell
+  leiden_resolution: 0.3          # coarse on purpose; sub-clustering follows
+
+# Which lambda is the canonical "cell typing" output that stages 4+ should use
+canonical_lambda: 0.2
+
+# ===== Annotation (stage 4) =====
+annotation:
+  # Path to the marker panel library
+  marker_panels: configs/marker_panels.yaml
+
+  # Z-score threshold for accepting a marker-set score as evidence for a label.
+  # Cells whose top panel score is below this stay as <type>_uncertain.
+  min_marker_score_z: 1.0
+
+  # Manual cluster -> broad cell type map at the canonical lambda.
+  # EDIT this after reading the marker table printed by stage 4 if your
+  # Leiden numbering does not match the locked map.
+  broad_label_map:
+    "0": fibroblast
+    "1": deep_dermal_stromal
+    "2": keratinocyte_basal_mix
+    "3": keratinocyte_suprabasal
+    "4": vascular_mixed
+
+# ===== IgG detection (stage 5) =====
+igg:
+  # Sub-clustering parameters for the deep_dermal_stromal compartment
+  sub_n_hvg: 2000
+  sub_n_pcs: 30
+  sub_leiden_resolution: 0.6
+  # The IgG panel used to score cells and to compute Set C (top-2.5% threshold)
+  ig_score_panel: [IGHG1, IGHG2, IGHG3, IGHG4, IGKC, JCHAIN]
+  # Sensitivity analysis: alternative IgG definitions to test
+  sensitivity_definitions: [strict, ig_score_top_2p5pct, ighg1_and_ighg4, ighg1_or_ighg4_plus_igkc]
+
+# ===== Neighbourhood enrichment (stage 6) =====
+neighbourhood:
+  k_list: [5, 10, 20]              # K values for sensitivity across scales
+  n_perm: 500                      # permutations per test
+  alpha: 0.05                      # FDR threshold for significance
+  min_cells_per_label: 20          # labels below this collapse to "rare_other"
+  # Spatial-bin permutation is the default null (preserves tissue geography).
+  # bin_size_px is the side of the square bins used for label shuffling within.
+  # Smaller bins = stricter (more local) null. ~200 px is reasonable for skin Stereo-seq.
+  spatial_bin_size_px: 200
+
+# ===== Distance-to-vessel (stage 7) =====
+distance:
+  # Which labels count as "vessel" for the distance computation
+  vessel_labels: [endothelial, lymphatic_endothelial]
+  n_perm: 500
+  min_cells_per_label: 20
+  # Conversion factor for reporting (Stereo-seq ~0.5 um per pixel)
+  px_per_um: 2.0
+
+# ===== Local niche (stage 8) =====
+local_niche:
+  # Distance threshold for "near IgG" stromal cells (in pixels)
+  near_threshold_px: 150
+  far_threshold_px: 500
+  n_perm: 500
+  # Programs (gene sets) to test for differential expression near vs far
+  niche_programs:
+    keloid_matrix:    [POSTN, ASPN, CTHRC1, COL11A1, COL12A1, FN1, SPARC, COMP]
+    myofibroblast:    [ACTA2, TAGLN, MYL9, TPM2, CNN1, ACTG2]
+    inflammatory:     [CXCL1, CXCL2, CXCL3, CXCL8, IL6, CCL2, ICAM1, TNFAIP6]
+    mast_contamination: [TPSAB1, TPSB2, CPA3, KIT, HDC]
+    macrophage_contamination: [LYZ, CD68, CD163, C1QA, C1QB]
+    antigen_presentation_IFN: [HLA-DRA, HLA-DRB1, CD74, ISG15, IFI27, IFI6]
+
+# ===== Report (stage 9) =====
+report:
+  title: "Keloid Stereo-seq ROI Report"
+  embed_images_as_base64: true     # makes a single portable HTML file

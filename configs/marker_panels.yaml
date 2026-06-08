@@ -1,0 +1,60 @@
+# Marker panel library for the keloid spatial atlas pipeline.
+# Organised by panel family. Each panel is a list of HGNC gene symbols.
+#
+# To add a new cell type: add a key under the relevant family below.
+# To extend an existing panel: add a gene to its list.
+# To validate panel coverage in a dataset: stage 4 (annotate) prints a presence
+# table per panel showing which genes are in adata.var_names and which are missing.
+
+# ===== broad_markers: pan markers for broad cluster annotation =====
+broad_markers:
+  keratinocyte_basal:        [KRT5, KRT14, KRT15, TP63, ITGA6, COL17A1]
+  keratinocyte_suprabasal:   [KRT1, KRT10, KRTDAP, DMKN, DSG1, CASP14, IVL, LOR]
+  fibroblast_pan:            [COL1A1, COL1A2, COL3A1, DCN, LUM, PDGFRA, DPT]
+  myofibroblast:             [ACTA2, TAGLN, MYL9, TPM2, CNN1, ACTG2]
+  endothelial:               [PECAM1, CDH5, VWF, KDR, CLDN5, ESAM, EMCN, ACKR1]
+  lymphatic_endothelial:     [LYVE1, PROX1, PDPN, FLT4, CCL21]
+  pericyte_smooth_muscle:    [RGS5, PDGFRB, CSPG4, MCAM, NOTCH3, ACTA2, TAGLN, MYH11]
+  macrophage:                [LYZ, CD68, CD163, C1QA, C1QB, C1QC, MS4A7, FCGR3A, TYROBP, LST1]
+  mast_cell:                 [TPSAB1, TPSB2, CPA3, KIT, HDC, MS4A2]
+  t_cell:                    [CD3D, CD3E, TRAC, TRBC1, TRBC2, IL7R, CD2]
+  b_cell:                    [MS4A1, CD79A, CD79B, CD74, BANK1, CD19, CD37]
+
+# ===== fibroblast_subtype_markers: five subtype programs =====
+# References: Driskell 2013 Nature (papillary vs reticular lineage),
+# Tabib 2018 J Invest Dermatol (skin scRNA-seq atlas),
+# Buechler 2021 Nature (pan-tissue inflammatory fibroblast atlas),
+# Liu 2022 Cell Discov (keloid mesenchymal fibroblast).
+fibroblast_subtype_markers:
+  mesenchymal_fibroblast:         [POSTN, ASPN, CTHRC1, COL11A1, COL12A1, FN1, SPARC, COMP, COL5A1, ITGA11]
+  secretory_papillary_fibroblast: [APOD, CFD, CXCL14, PI16, C7, DPP4, FBLN1, MFAP5]
+  secretory_reticular_fibroblast: [DPT, COL14A1, CCDC80, FBLN1, MFAP5, LUM, DCN, COL6A5]
+  pro_inflammatory_fibroblast:    [CXCL1, CXCL2, CXCL3, CXCL8, IL6, CCL2, ICAM1, TNFAIP6, PTGS2]
+  myofibroblast:                  [ACTA2, TAGLN, MYL9, TPM2, CNN1, ACTG2, POSTN]
+
+# ===== vessel_markers: three vessel-compartment classes =====
+vessel_markers:
+  endothelial:              [PECAM1, CDH5, VWF, KDR, CLDN5, ESAM, EMCN, ACKR1]
+  lymphatic_endothelial:    [LYVE1, PROX1, PDPN, FLT4, CCL21]
+  pericyte_smooth_muscle:   [RGS5, PDGFRB, CSPG4, MCAM, NOTCH3, ACTA2, TAGLN, MYH11]
+
+# ===== immune_markers: four candidate immune populations =====
+# IgG_producing is scored here too so the same scoring framework applies to it.
+immune_markers:
+  macrophage:    [LYZ, CD68, CD163, C1QA, C1QB, C1QC, MS4A7, FCGR3A, TYROBP, LST1]
+  mast_cell:     [TPSAB1, TPSB2, CPA3, KIT, HDC, MS4A2]
+  t_cell:        [CD3D, CD3E, TRAC, TRBC1, TRBC2, IL7R, CD2]
+  b_cell:        [MS4A1, CD79A, CD79B, CD74, BANK1, CD19, CD37]
+  IgG_producing: [IGHG1, IGHG2, IGHG3, IGHG4, IGKC, IGLC1, IGLC2, IGLC3]
+
+# ===== Markers used in the IF/IHC validation panel (for reference) =====
+# Not used by the pipeline; documented here for protein-level validation.
+igg_validation_markers_protein:
+  - CD138_SDC1
+  - MZB1
+  - IgG_heavy_chain
+  - CD45_PTPRC
+  - CD79A
+  - CD20_MS4A1
+  - CD38
+  - Ki67

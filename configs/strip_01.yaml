@@ -1,43 +1,95 @@
-# Config for one tissue strip ROI.
-# To analyse a new strip: copy this file, change `roi_id` and `strip_coords`,
-# then run: python pipeline/run_all.py --config configs/strip_02.yaml
+# Config for strip_01, the validated reference strip.
+# Spans the epidermal edge into the deep dermis in the left half of chip C04029G4.
+# Use this as the working example and as the template for new strips.
 
 roi_id: strip_01
 description: >
-  First strip. Span the tissue from the epidermal edge into the deep dermis
-  so that all skin compartments are represented when clustering.
+  First strip. Spans the tissue from the epidermal edge into the deep dermis
+  so that all skin compartments are represented when clustering. Locked in
+  notebook 04; reproduced in notebook 06; pipeline reference.
 
-# Strip coordinates in chip pixel space (x_min, x_max, y_min, y_max).
-# I pick these by looking at the chip plot from
-# notebooks/exploration/01_strip_picker.ipynb and reading them off the axes.
 strip_coords:
   x_min: 4000
   x_max: 11000
   y_min: 8500
   y_max: 10500
 
-# Input data
 input:
   proseg_h5ad: /Users/chobani/keloid_analysis/outputs/proseg_full_raw.h5ad
 
-# Output folder for this strip
+# Optional: upstream stages (Cellpose + proseg). Only used if you run
+# pipeline/run_all.py --from-stage 0 (Cellpose) or --from-stage 0.5 (proseg).
+# Skip this block if you already have a proseg h5ad to feed in.
+upstream:
+  chip_id: chip_C04029G4
+  upstream_out_dir: outputs/chip_C04029G4_upstream
+  he_tif: /Users/chobani/Downloads/Stereo_Original_File/Stereo_5/HE_C04029G4_regist.tif
+  tissue_gef: /Users/chobani/Downloads/Stereo_Original_File/Stereo_5/C04029G4.tissue.gef
+  cellpose_diameter: null
+  cellpose_flow_threshold: 0.4
+  cellpose_cellprob_threshold: 0.0
+  proseg_binary: /Users/chobani/.cargo/bin/proseg
+  proseg_burnin_samples: 100
+  proseg_samples: 100
+
 output_dir: outputs/strip_01
 
-# QC + normalisation
 qc:
-  cap_umi_percentile: 99      # drop top 1% UMI cells (doublet-like)
+  cap_umi_percentile: 99
   min_counts_per_cell: 50
   min_cells_per_gene: 5
   n_top_hvg: 3000
-  # Genes to drop from HVG (dominate keloid expression and bias clustering)
   structural_regex: '^(COL\d|KRT\d|MT-|RP[SL]\d|HB[^P])'
 
-# BANKSY parameters
 banksy:
-  lambdas: [0.0, 0.2, 0.4, 0.8]   # sweep: low = cell typing, high = tissue domain
-  k_geom: 6                       # spatial neighbours per cell
+  lambdas: [0.0, 0.2, 0.4, 0.8]
+  k_geom: 6
   leiden_resolution: 0.3
 
-# Annotation
+canonical_lambda: 0.2
+
 annotation:
-  marker_panel: configs/skin_markers.yaml
+  marker_panels: configs/marker_panels.yaml
+  min_marker_score_z: 1.0
+  broad_label_map:
+    "0": fibroblast
+    "1": deep_dermal_stromal
+    "2": keratinocyte_basal_mix
+    "3": keratinocyte_suprabasal
+    "4": vascular_mixed
+
+igg:
+  sub_n_hvg: 2000
+  sub_n_pcs: 30
+  sub_leiden_resolution: 0.6
+  ig_score_panel: [IGHG1, IGHG2, IGHG3, IGHG4, IGKC, JCHAIN]
+  sensitivity_definitions: [strict, ig_score_top_2p5pct, ighg1_and_ighg4, ighg1_or_ighg4_plus_igkc]
+
+neighbourhood:
+  k_list: [5, 10, 20]
+  n_perm: 500
+  alpha: 0.05
+  min_cells_per_label: 20
+  spatial_bin_size_px: 200
+
+distance:
+  vessel_labels: [endothelial, lymphatic_endothelial]
+  n_perm: 500
+  min_cells_per_label: 20
+  px_per_um: 2.0
+
+local_niche:
+  near_threshold_px: 150
+  far_threshold_px: 500
+  n_perm: 500
+  niche_programs:
+    keloid_matrix:    [POSTN, ASPN, CTHRC1, COL11A1, COL12A1, FN1, SPARC, COMP]
+    myofibroblast:    [ACTA2, TAGLN, MYL9, TPM2, CNN1, ACTG2]
+    inflammatory:     [CXCL1, CXCL2, CXCL3, CXCL8, IL6, CCL2, ICAM1, TNFAIP6]
+    mast_contamination: [TPSAB1, TPSB2, CPA3, KIT, HDC]
+    macrophage_contamination: [LYZ, CD68, CD163, C1QA, C1QB]
+    antigen_presentation_IFN: [HLA-DRA, HLA-DRB1, CD74, ISG15, IFI27, IFI6]
+
+report:
+  title: "strip_01 keloid Stereo-seq atlas"
+  embed_images_as_base64: true
