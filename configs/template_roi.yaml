@@ -92,16 +92,28 @@ annotation:
   #   "3": keratinocyte_suprabasal
   #   "4": vascular_mixed
 
-# ===== IgG detection (stage 5) =====
-igg:
-  # Sub-clustering parameters for the deep_dermal_stromal compartment
+# ===== Focal aggregate detection (stage 5) =====
+# Generic "find a rare focal population inside a broad compartment". Defaults to
+# IgG identification in deep_dermal_stromal (the keloid biology we validated).
+# Set enabled: false to skip the stage entirely if your sample has no specific
+# rare population to look for. Configure target_* to repurpose for any cell type.
+focal:
+  enabled: true
+  target_compartment: deep_dermal_stromal   # which broad celltype to sub-cluster
+  target_label: IgG_rich_candidate           # name applied to the found aggregate
+  primary_marker: IGHG1                      # gene used to rank sub-clusters
+  # The panel used for sensitivity Set C (top-2.5% composite score) and for the
+  # marker-fraction validation table.
+  validation_panel: [IGHG1, IGHG2, IGHG3, IGHG4, IGKC, IGLC1, IGLC2, IGLC3, JCHAIN, MZB1, XBP1, SDC1, CD79A, CD38]
+  ig_score_panel:   [IGHG1, IGHG2, IGHG3, IGHG4, IGKC, JCHAIN]
+  # Sub-clustering parameters
   sub_n_hvg: 2000
   sub_n_pcs: 30
   sub_leiden_resolution: 0.6
-  # The IgG panel used to score cells and to compute Set C (top-2.5% threshold)
-  ig_score_panel: [IGHG1, IGHG2, IGHG3, IGHG4, IGKC, JCHAIN]
-  # Sensitivity analysis: alternative IgG definitions to test
-  sensitivity_definitions: [strict, ig_score_top_2p5pct, ighg1_and_ighg4, ighg1_or_ighg4_plus_igkc]
+  # Sensitivity definitions to test alongside the strict set
+  sensitivity_definitions: [strict, score_top_2p5pct, primary_and_secondary, primary_or_secondary_plus_light]
+  secondary_marker: IGHG4       # used by 'primary_and_secondary' and 'primary_or_secondary' sensitivity defs
+  light_chain_marker: IGKC      # used by 'primary_or_secondary_plus_light' sensitivity def
 
 # ===== Neighbourhood enrichment (stage 6) =====
 neighbourhood:

@@ -58,12 +58,19 @@ annotation:
     "3": keratinocyte_suprabasal
     "4": vascular_mixed
 
-igg:
+focal:
+  enabled: true
+  target_compartment: deep_dermal_stromal
+  target_label: IgG_rich_candidate
+  primary_marker: IGHG1
+  secondary_marker: IGHG4
+  light_chain_marker: IGKC
+  validation_panel: [IGHG1, IGHG2, IGHG3, IGHG4, IGKC, IGLC1, IGLC2, IGLC3, JCHAIN, MZB1, XBP1, SDC1, CD79A, CD38]
+  ig_score_panel:   [IGHG1, IGHG2, IGHG3, IGHG4, IGKC, JCHAIN]
   sub_n_hvg: 2000
   sub_n_pcs: 30
   sub_leiden_resolution: 0.6
-  ig_score_panel: [IGHG1, IGHG2, IGHG3, IGHG4, IGKC, JCHAIN]
-  sensitivity_definitions: [strict, ig_score_top_2p5pct, ighg1_and_ighg4, ighg1_or_ighg4_plus_igkc]
+  sensitivity_definitions: [strict, score_top_2p5pct, primary_and_secondary, primary_or_secondary_plus_light]
 
 neighbourhood:
   k_list: [5, 10, 20]

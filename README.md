@@ -71,7 +71,7 @@ The HTML report sections correspond directly to pipeline stages. The numbers and
 | Summary | IgG candidate set sizes (Set D strict, Set A loose, etc.) and total significant neighbour pairs at K=10. Quick health-check. |
 | Stage 3 BANKSY lambda sweep | Did the lambda sweep produce sensible cluster counts? Each lambda should give 3-8 clusters. |
 | Stage 4 Annotation | Broad cell counts. The marker presence tables tell you which marker panels had missing genes in your dataset (low coverage = weak calls). The detailed marker fraction table is the per-label sanity check. |
-| Stage 5 IgG identification | The selected sub-cluster's IGHG1+ fraction should be ≥ 50%. The set sizes show how many cells each definition gives. The marker fraction per set shows whether heavy + light chains are co-enriched. |
+| Stage 5 focal-aggregate identification | The selected sub-cluster's primary-marker-positive fraction should be ≥ 50%. The set sizes show how many cells each definition gives. The marker fraction per set shows whether the validation panel is co-enriched. (Default config targets IgG aggregates in deep_dermal_stromal; configurable via the `focal:` block.) |
 | Stage 6 Neighbourhood enrichment | Heatmap with `*` marking q < 0.05 pairs. The IgG focal row table tells you what sits next to IgG cells. |
 | Stage 7 Distance to vessel | Boxplot of per-label distances. The test table tells you which labels live closer to vessels than chance. |
 | Stage 8 Local stromal niche | Program-level table comparing near-IgG vs far-from-IgG stromal cells. Significant programs (q < 0.05) name candidate niche signatures. |
@@ -86,7 +86,7 @@ The HTML report sections correspond directly to pipeline stages. The numbers and
 | 2 | `02_qc_normalise.py` | strip h5ad | `adata_normalised.h5ad` |
 | 3 | `03_banksy_cluster.py` | normalised h5ad | `adata_banksy.h5ad`, `figures/03_banksy_lambda_sweep.png` |
 | 4 | `04_annotate_cells.py` | banksy h5ad + marker panels | `adata_annotated.h5ad`, marker tables, spatial PNGs |
-| 5 | `05_igg_detection.py` | annotated h5ad | `adata_with_igg.h5ad`, IgG sensitivity table |
+| 5 | `05_igg_detection.py` | annotated h5ad | `adata_with_igg.h5ad`, focal-aggregate sensitivity tables. Generic: configurable target compartment + marker via `focal:` block; default targets IgG in deep_dermal_stromal. Skip with `focal.enabled: false`. |
 | 6 | `06_neighbourhood.py` | igg h5ad | neighbourhood CSVs, K=10 heatmap PNG |
 | 7 | `07_distance_to_vessel.py` | igg h5ad | distance CSVs, distance boxplot PNG |
 | 8 | `08_local_niche.py` | igg h5ad | niche test CSVs, near-vs-far PNGs |
@@ -114,6 +114,31 @@ python pipeline/10_aggregate_rois.py --roi-glob 'outputs/autotile_*' --out outpu
 ```
 
 The aggregate report tells you whether the IgG-neighbour pattern (or any other pattern in stage 6) reproduces across tiles. A Spearman rank correlation above ~0.5 between two tiles is strong reproducibility; below ~0.2 means the finding is local to one tile.
+
+## Stage 5 is a generic focal-aggregate finder
+
+Stage 5 is not hardcoded to IgG. The `focal:` block in the YAML config controls what it looks for:
+
+```yaml
+focal:
+  enabled: true
+  target_compartment: deep_dermal_stromal   # which broad celltype to sub-cluster
+  target_label: IgG_rich_candidate           # name applied to the found aggregate
+  primary_marker: IGHG1                      # gene used to rank sub-clusters
+  secondary_marker: IGHG4                    # used by sensitivity definitions
+  light_chain_marker: IGKC                   # used by sensitivity definitions
+  validation_panel: [...]                    # genes for the per-set fraction table
+  ig_score_panel:   [...]                    # genes for the composite score (Set C)
+  sensitivity_definitions: [strict, score_top_2p5pct, primary_and_secondary, primary_or_secondary_plus_light]
+```
+
+To repurpose for another rare population:
+- Mast cell aggregate in a fibrotic lung sample: set `target_compartment: fibroblast`, `primary_marker: TPSAB1`, `target_label: mast_focus`, `validation_panel: [TPSAB1, TPSB2, CPA3, KIT]`.
+- T cell focus in an autoimmune skin biopsy: set `target_compartment: deep_dermal_stromal`, `primary_marker: CD3D`, `target_label: t_cell_focus`, etc.
+
+If your sample has no expected focal population, set `focal.enabled: false`. Stage 5 will be skipped, stages 6, 7, 9, 11 still run on the broad labels, and stage 8 will warn and skip cleanly.
+
+The default config (`configs/strip_01.yaml`) is set for IgG in keloid because that is the reference biology we validated. The pipeline itself is agnostic.
 
 ## Stage 4 auto-suggests labels by default
 

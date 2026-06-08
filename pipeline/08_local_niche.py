@@ -40,7 +40,6 @@ from stats_utils import (
 from plot_utils import spatial_scatter
 
 
-IGG_LABEL = "IgG_rich_candidate"
 STROMAL_LABELS = ["fibroblast", "deep_dermal_stromal", "fibroblast_uncertain"]
 
 
@@ -53,9 +52,13 @@ def main():
     paths = out_paths(cfg)
     n_cfg = cfg["local_niche"]
     nb_bin = cfg["neighbourhood"]["spatial_bin_size_px"]
+    # Generic: read the focal-population label from the focal block (default to IgG)
+    fcfg = cfg.get("focal") or cfg.get("igg") or {}
+    FOCAL_LABEL = fcfg.get("target_label", "IgG_rich_candidate")
     SEED = 0
 
     print(f"[stage 8] roi_id         : {cfg['roi_id']}")
+    print(f"[stage 8] focal label    : {FOCAL_LABEL}")
     print(f"[stage 8] near threshold : {n_cfg['near_threshold_px']} px")
     print(f"[stage 8] far threshold  : {n_cfg['far_threshold_px']} px")
 
@@ -65,22 +68,23 @@ def main():
 
     label_key = "celltype_detailed_v1"
     labels = a.obs[label_key].astype(str).values
-    is_igg = labels == IGG_LABEL
+    is_focal = labels == FOCAL_LABEL
     is_stromal = np.isin(labels, STROMAL_LABELS)
-    print(f"[stage 8] IgG cells       : {int(is_igg.sum())}")
+    print(f"[stage 8] focal cells     : {int(is_focal.sum())}")
     print(f"[stage 8] stromal cells   : {int(is_stromal.sum())}")
-    if is_igg.sum() == 0:
-        print("[stage 8] WARNING: no IgG cells, skipping niche analysis.")
+    if is_focal.sum() == 0:
+        print(f"[stage 8] WARNING: no '{FOCAL_LABEL}' cells found. Stage 5 may have been "
+              f"disabled or this sample has no focal aggregate. Skipping niche analysis.")
         return
 
-    nn = NearestNeighbors(n_neighbors=1).fit(xy[is_igg])
+    nn = NearestNeighbors(n_neighbors=1).fit(xy[is_focal])
     d, _ = nn.kneighbors(xy); d = d.ravel()
-    a.obs["dist_to_nearest_igg_px"] = d
+    a.obs["dist_to_nearest_focal_px"] = d
 
     near = is_stromal & (d <= n_cfg["near_threshold_px"])
     far  = is_stromal & (d >= n_cfg["far_threshold_px"])
-    print(f"[stage 8] near-IgG stromal: {int(near.sum())}  "
-          f"far-from-IgG stromal: {int(far.sum())}")
+    print(f"[stage 8] near-focal stromal: {int(near.sum())}  "
+          f"far-from-focal stromal: {int(far.sum())}")
 
     if near.sum() < 20 or far.sum() < 20:
         print("[stage 8] WARNING: too few cells in near or far group. Skipping.")
@@ -128,15 +132,15 @@ def main():
 
     # ---- Spatial diagnostic plot -----------------------------------------
     nf_label = pd.Series("other", index=a.obs_names, dtype=object)
-    nf_label[near] = "stromal_near_IgG"
-    nf_label[far]  = "stromal_far_IgG"
-    nf_label[is_igg] = IGG_LABEL
-    a.obs["near_vs_far_igg"] = pd.Categorical(nf_label)
+    nf_label[near] = "stromal_near_focal"
+    nf_label[far]  = "stromal_far_focal"
+    nf_label[is_focal] = FOCAL_LABEL
+    a.obs["near_vs_far_focal"] = pd.Categorical(nf_label)
     spatial_scatter(
-        a, "near_vs_far_igg",
-        title=f"{cfg['roi_id']}: stromal cells near vs far from IgG",
+        a, "near_vs_far_focal",
+        title=f"{cfg['roi_id']}: stromal cells near vs far from {FOCAL_LABEL}",
         filename=paths["fig"] / "08_near_vs_far_spatial.png",
-        highlight=[IGG_LABEL],
+        highlight=[FOCAL_LABEL],
     )
 
     a.write_h5ad(paths["atlas"])
