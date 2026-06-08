@@ -8,11 +8,7 @@ This repository contains a reproducible pipeline for analysing keloid Stereo-seq
 
 Keloid scars contain abnormal interactions between fibroblasts and immune cells that drive scar overgrowth. Bulk RNA and coarse bin-level data cannot resolve these interactions because the abundant fibroblast collagen signal drowns out the rarer immune signal. This pipeline operates on proseg-segmented single cells with BANKSY clustering and spatial neighbourhood statistics, so you can ask quantitative questions such as "do IgG-producing cells sit next to a specific fibroblast subtype?" with permutation-based p-values and FDR control.
 
-### One-paragraph elevator pitch
-
-A YAML-driven pipeline that takes a proseg AnnData file, crops a tissue strip, runs QC and normalisation, runs BANKSY clustering at a sweep of lambda values, annotates broad and detailed cell types from marker panels, identifies IgG-rich candidate cells with a multi-definition sensitivity check, runs all-pair spatial neighbourhood enrichment with a spatial-bin permutation null, runs distance-to-vessel analysis, runs a local stromal niche test around IgG cells, and writes a self-contained HTML report. One config file per ROI; one command to run.
-
-### What to do as a new lab member
+### Guide
 
 One-time setup on your machine:
 
@@ -40,7 +36,7 @@ cp configs/strip_01.yaml configs/strip_02.yaml
 
 Then edit `strip_02.yaml` (change `roi_id`, `strip_coords`, `output_dir`), and run with `--config configs/strip_02.yaml`.
 
-## What you get out
+## What you get out (output)
 
 Per ROI, in `outputs/<roi_id>/`:
 
