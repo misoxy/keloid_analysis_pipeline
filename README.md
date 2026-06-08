@@ -177,13 +177,6 @@ Marker panels are in `configs/marker_panels.yaml`, organised into seven panel fa
 
 To add a new cell type, add a key under the relevant panel family. Genes are HGNC symbols matching the AnnData `var_names`. Stage 4 prints a per-panel coverage table (which genes are present vs missing in your dataset) so you can see immediately whether a panel can be trusted for your data.
 
-## Caveats
-
-- Marker-score-based subtyping is a proposal, not a classification. Cells whose top panel score is below the z threshold are flagged `*_uncertain` rather than force-classified.
-- `IgG_rich_candidate` is the honest label for the focal IgG aggregate. Stereo-seq mRNA cannot resolve mature plasma cells from antibody-internalising macrophages without protein validation (CD138, MZB1, IgG, CD45/CD79A on IF/IHC).
-- A single strip is one observation. Reproducibility requires running this pipeline on multiple strips and comparing.
-- Permutation tests use a spatial-bin null by default, which preserves coarse tissue geography, rather than a global label shuffle which would be too liberal in spatially structured tissue.
-
 ## Troubleshooting
 
 - `No such file: proseg_h5ad`: edit the `input.proseg_h5ad` line in your YAML config.
