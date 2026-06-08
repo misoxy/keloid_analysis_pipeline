@@ -64,8 +64,8 @@ def git_commit_hash():
 def write_provenance(cfg, config_path, paths, extra=None):
     """Write provenance.json with config + git hash + timestamp + extras.
 
-    Call this at the end of run_all.py so the prof can trace any figure back
-    to the exact code state that produced it.
+    Call this at the end of run_all.py so any figure or table in the output
+    can be traced back to the exact code state and config that produced it.
     """
     rec = {
         "roi_id":        cfg.get("roi_id"),

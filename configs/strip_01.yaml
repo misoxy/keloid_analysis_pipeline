@@ -15,7 +15,7 @@ strip_coords:
   y_max: 10500
 
 input:
-  proseg_h5ad: /Users/chobani/keloid_analysis/outputs/proseg_full_raw.h5ad
+  proseg_h5ad: /path/to/proseg_full_raw.h5ad
 
 # Optional: upstream stages (Cellpose + proseg). Only used if you run
 # pipeline/run_all.py --from-stage 0 (Cellpose) or --from-stage 0.5 (proseg).
@@ -23,12 +23,12 @@ input:
 upstream:
   chip_id: chip_C04029G4
   upstream_out_dir: outputs/chip_C04029G4_upstream
-  he_tif: /Users/chobani/Downloads/Stereo_Original_File/Stereo_5/HE_C04029G4_regist.tif
-  tissue_gef: /Users/chobani/Downloads/Stereo_Original_File/Stereo_5/C04029G4.tissue.gef
+  he_tif: /path/to/HE_C04029G4_regist.tif
+  tissue_gef: /path/to/C04029G4.tissue.gef
   cellpose_diameter: null
   cellpose_flow_threshold: 0.4
   cellpose_cellprob_threshold: 0.0
-  proseg_binary: /Users/chobani/.cargo/bin/proseg
+  proseg_binary: proseg
   proseg_burnin_samples: 100
   proseg_samples: 100
 

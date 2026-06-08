@@ -38,7 +38,7 @@ upstream:
   cellpose_diameter: null      # null = auto-estimate; set explicitly for reproducibility
   cellpose_flow_threshold: 0.4
   cellpose_cellprob_threshold: 0.0
-  proseg_binary: /Users/chobani/.cargo/bin/proseg   # or just "proseg" if on PATH
+  proseg_binary: proseg                 # path to the proseg binary, or just "proseg" if on PATH
   proseg_burnin_samples: 100
   proseg_samples: 100
 

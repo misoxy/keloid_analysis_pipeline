@@ -9,7 +9,7 @@ the sweep, clusters each result with Leiden, and saves:
 
 Lambda controls how much spatial neighbour information is mixed in:
   - lambda = 0.0 -> ignore neighbours (same as standard Leiden, baseline)
-  - lambda ~ 0.2 -> cell typing (the prof's preferred setting)
+  - lambda ~ 0.2 -> cell typing (cell types preserved, slight spatial tightening)
   - lambda ~ 0.4 -> balanced mix
   - lambda ~ 0.8 -> tissue domain segmentation (epidermal zone vs dermal zone)
 
